@@ -7,6 +7,7 @@ library(tidyr)
 library(data.table)
 library(cluster)
 library(fpc)
+library(dplyr)
 
 ## Read in data
 data<-read.csv("data_km.csv")
@@ -22,7 +23,7 @@ screeplot(pcadata)
 plot(pcadata, type="lines")
 
 ##Scale data
-data<- scale(data) 
+data_scaled<- scale(data) 
 
 # Determine number of clusters for k means
 wss <- (nrow(data)-1)*sum(apply(data,2,var))
@@ -32,11 +33,11 @@ plot(1:10, wss, type="b", xlab="# of Clusters",
      ylab="Within groups sum of squares")
 
 # K-Means Cluster Analysis with k=3
-fit <- kmeans(data, 3) # 5 cluster solution
+fit <- kmeans(data_scaled, 3) # 5 cluster solution
 # get cluster means 
-aggregate(data,by=list(fit$cluster),FUN=mean)
+aggregate(data_scaled,by=list(fit$cluster),FUN=mean)
 ##Plot clusters against 2 comps
-mydata<-data.frame(data, fit$cluster)
+mydata<-data.frame(data_scaled, fit$cluster)
 clusplot(mydata, fit$cluster, color=TRUE, shade=TRUE, 
          labels=2, lines=0)
 
@@ -63,9 +64,42 @@ employment<-read.csv("employment0809.csv")
 head(employment)
 knamesdata$deltaemploy<-(employment$Employment_total09-employment$Employment_total08)
 
-## Add in control variables
-knamesdata$white<-mydata$Estimate..White.alone
-knamesdata$black<-mydata$Estimate..Black.or.African.American.alone
-knamesdata$indian<-mydata$Estimate..American.Indian.and.Alaska.alone
-knamesdata$asian<-mydata$Estimate..Asian.alone
+## Add in race variables
+controls<-read.csv("Data_Collection.csv")
+head(controls)
+knamesdata$white<-((data$Estimate..White.alone/controls$Population)*100)
+knamesdata$black<-((data$Estimate..Black.or.African.American.alone/controls$Population)*100)
+knamesdata$Am_indian<-((data$Estimate..American.Indian.and.Alaska.Native.alone/controls$Population)*100)
+knamesdata$asian<-((data$Estimate..Asian.alone/controls$Population)*100)
 
+##Add in all other control variables
+knamesdata$median_age<-controls$Total..Estimate..Total.population...SUMMARY.INDICATORS...Median.age..years
+knamesdata$gender_ratio<-controls$Total..Estimate..Total.population...SUMMARY.INDICATORS...Sex.ratio..males.per.100.females.
+knamesdata$education<-controls$Total..Estimate..Population.25.years.and.over...Bachelor.s.degree
+knamesdata$married<-controls$Now.married..except.separated...Estimate..Population.15.years.and.over
+head(knamesdata)
+
+## Seperate out data by k-clusters
+group1<-filter(knamesdata, fit.cluster==1)
+group2<-filter(knamesdata, fit.cluster==2)
+group3<-filter(knamesdata, fit.cluster==3)
+
+## Descriptive statistics for clusters
+library(stargazer)
+group1table<-stargazer(group1[,6:13], type="html")
+group2table<-stargazer(group2[,6:13], type="html")
+group3table<-stargazer(group3[,6:13], type="html")
+
+## Create models
+group1_1<-lm(deltaemploy~statedummy, data=group1)
+output1_1<-summary(group1_1)
+group1_2<-lm(deltaemploy~statedummy+white+black+Am_indian+asian+median_age+gender_ratio+education+married, data=group1)
+output1_2<-summary(group1_2)
+group2_1<-lm(deltaemploy~statedummy, data=group2)
+output1_2<-summary(group2_1)
+group2_2<-lm(deltaemploy~statedummy+white+black+Am_indian+asian+median_age+gender_ratio+education+married, data=group2)
+output2_2<-summary(group2_2)
+group3_1<-lm(deltaemploy~statedummy, data=group3)
+output3_1<-summary(group3_1)
+group3_2<-lm(deltaemploy~statedummy+white+black+Am_indian+asian+median_age+gender_ratio+education+married, data=group3)
+output3_2<-summary(group3_2)
