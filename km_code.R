@@ -62,15 +62,15 @@ for(x in affected){
 ## read in employment variable = Y and make delta Y
 employment<-read.csv("employment0809.csv")
 head(employment)
-knamesdata$deltaemploy<-(employment$Employment_total09-employment$Employment_total08)
+knamesdata$deltaemploy<-employment$delta_employ
 
 ## Add in race variables
 controls<-read.csv("Data_Collection.csv")
 head(controls)
-knamesdata$white<-((data$Estimate..White.alone/controls$Population)*100)
-knamesdata$black<-((data$Estimate..Black.or.African.American.alone/controls$Population)*100)
-knamesdata$Am_indian<-((data$Estimate..American.Indian.and.Alaska.Native.alone/controls$Population)*100)
-knamesdata$asian<-((data$Estimate..Asian.alone/controls$Population)*100)
+knamesdata$White<-((data$Estimate..White.alone/controls$Population)*100)
+knamesdata$Black<-((data$Estimate..Black.or.African.American.alone/controls$Population)*100)
+knamesdata$Hispanic<-controls$percent_hispanic
+knamesdata$Asian<-((data$Estimate..Asian.alone/controls$Population)*100)
 
 ##Add in all other control variables
 knamesdata$median_age<-controls$Total..Estimate..Total.population...SUMMARY.INDICATORS...Median.age..years
@@ -86,20 +86,25 @@ group3<-filter(knamesdata, fit.cluster==3)
 
 ## Descriptive statistics for clusters
 library(stargazer)
-group1table<-stargazer(group1[,6:13], type="html")
-group2table<-stargazer(group2[,6:13], type="html")
-group3table<-stargazer(group3[,6:13], type="html")
+group1table<-stargazer(group1[,6:13])
+group2table<-stargazer(group2[,6:13])
+group3table<-stargazer(group3[,6:13])
 
 ## Create models
+##Group 1
 group1_1<-lm(deltaemploy~statedummy, data=group1)
-output1_1<-summary(group1_1)
-group1_2<-lm(deltaemploy~statedummy+white+black+Am_indian+asian+median_age+gender_ratio+education+married, data=group1)
-output1_2<-summary(group1_2)
+group1_2<-lm(deltaemploy~statedummy+White+Black+Hispanic+Asian, data=group1)
+group1_3<-lm(deltaemploy~statedummy+White+Black+Hispanic+Asian+education+married, data=group1)
+##Group 2
 group2_1<-lm(deltaemploy~statedummy, data=group2)
-output1_2<-summary(group2_1)
-group2_2<-lm(deltaemploy~statedummy+white+black+Am_indian+asian+median_age+gender_ratio+education+married, data=group2)
-output2_2<-summary(group2_2)
+group2_2<-lm(deltaemploy~statedummy+White+Black+Hispanic+Asian, data=group2)
+group2_3<-lm(deltaemploy~statedummy+White+Black+Hispanic+Asian+median_age+gender_ratio+education+married, data=group2)
+## Group 3
 group3_1<-lm(deltaemploy~statedummy, data=group3)
-output3_1<-summary(group3_1)
-group3_2<-lm(deltaemploy~statedummy+white+black+Am_indian+asian+median_age+gender_ratio+education+married, data=group3)
-output3_2<-summary(group3_2)
+group3_2<-lm(deltaemploy~statedummy+White+Black+Hispanic+Asian, data=group3)
+group3_3<-lm(deltaemploy~statedummy+White+Black+Hispanic+Asian+median_age+gender_ratio+education+married, data=group3)
+
+##Create output tables
+stargazer(group1_1, group1_2, group1_3, title="Difference-In-Difference: Group 1")
+stargazer(group2_1, group2_2, group2_3, title="Difference-In-Difference: Group 2")
+stargazer(group3_1, group3_2, group3_3, title="Difference-In-Difference: Group 3")
