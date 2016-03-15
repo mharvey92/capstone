@@ -60,6 +60,9 @@ for(x in affected){
     }
 }
 
+##Export file for shapefile plot
+write.csv(knamesdata, "data_shapefile.csv")
+
 ## Set up diff in diff model
 
 ## read in employment variable = Y and make delta Y
@@ -81,6 +84,8 @@ knamesdata$median_age<-controls$Total..Estimate..Total.population...SUMMARY.INDI
 knamesdata$gender_ratio<-controls$Total..Estimate..Total.population...SUMMARY.INDICATORS...Sex.ratio..males.per.100.females.
 knamesdata$education<-controls$Total..Estimate..Population.25.years.and.over...Bachelor.s.degree
 knamesdata$married<-controls$Now.married..except.separated...Estimate..Population.15.years.and.over
+knamesdata$population<-controls$Population
+
 head(knamesdata)
 ## Only complete cases (theres should be 5 less obs because of 2008 employment var)
 knamesdata<-knamesdata[complete.cases(knamesdata),]
@@ -92,9 +97,9 @@ group3<-filter(knamesdata, fit.cluster==3)
 
 ## Descriptive statistics for clusters
 library(stargazer)
-group1table<-stargazer(group1[,9:16])
-group2table<-stargazer(group2[,9:16])
-group3table<-stargazer(group3[,9:16])
+group1table<-stargazer(group1[,9:17])
+group2table<-stargazer(group2[,9:17])
+group3table<-stargazer(group3[,9:17])
 
 ## Create models
 ##Group 1
